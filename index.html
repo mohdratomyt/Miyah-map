@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MiyahMap</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Global font stack for better readability */
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+        }
+
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px; /* For horizontal scrollbars */
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; /* Lighter track */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #a0a0a0; /* Slightly darker thumb */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7a7a7a; /* Even darker on hover */
+        }
+
+        /* Accessible focus state for all interactive elements */
+        *:focus-visible {
+            outline: 2px solid #3b82f6; /* Tailwind blue-500 */
+            outline-offset: 2px;
+            border-radius: 4px; /* Slightly rounded outline */
+        }
+
+        /* Custom style for the toggle switch's inner circle position */
+        .toggle-checkbox:checked {
+          right: 0;
+          border-color: #2563eb;
+        }
+        .toggle-checkbox {
+          transition: all 0.2s ease;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+          background-color: #2563eb;
+        }
+        .toggle-label {
+          transition: all 0.2s ease;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "d3": "https://esm.sh/d3@^7.9.0",
+    "d3-geo": "https://esm.sh/d3-geo@^3.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-800">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
