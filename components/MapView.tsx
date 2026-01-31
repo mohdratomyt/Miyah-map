@@ -99,45 +99,41 @@ const MapView: React.FC<MapViewProps> = ({ geojson, neighborhoodData, currentLan
 
     const path = geoPath().projection(projection);
 
-    const dataMap = new Map(neighborhoodData.map(d => [d.id, d]));
-
+    // 1. Render the base map (Sudan)
     svg.append('g')
       .selectAll('path')
       .data(geojson.features)
       .join('path')
       .attr('d', path as d3.Path<any, d3.GeoPermissibleObjects>)
-      .attr('fill', (d: GeoFeature) => {
-        const nb = dataMap.get(d.properties.id) as NeighborhoodData | undefined;
-        if (!nb) return getStatusColor(WaterStatus.UNKNOWN);
+      .attr('fill', '#e5e7eb') // Tailwind gray-200
+      .attr('stroke', '#9ca3af') // Tailwind gray-400
+      .attr('stroke-width', 1);
 
-        // Apply filter: dim if not matching
-        if (filterWaterStatus !== 'All' && nb.waterStatus !== filterWaterStatus) {
-          return 'rgba(200, 200, 200, 0.6)'; // Dim non-matching areas
-        }
-        return getStatusColor(nb.waterStatus);
+    // 2. Render City Circles
+    const circles = svg.append('g')
+      .selectAll('circle')
+      .data(neighborhoodData) // Using usage-level data directly
+      .join('circle')
+      .attr('cx', (d) => projection([d.centroid.lng, d.centroid.lat])?.[0] || 0)
+      .attr('cy', (d) => projection([d.centroid.lng, d.centroid.lat])?.[1] || 0)
+      .attr('r', (d) => {
+        // Make circles size responsive or fixed but visually distinct
+        return Math.max(width / 50, 6);
       })
-      .attr('stroke', (d: GeoFeature) => {
-        const nb = dataMap.get(d.properties.id) as NeighborhoodData | undefined;
-        // Highlight critical areas with a red stroke
-        if (nb && (nb.waterStatus === WaterStatus.CONTAMINATED || (nb.waterStatus === WaterStatus.NO_WATER && (nb.daysNoWater || 0) >= 7))) {
-          return 'rgb(239, 68, 68)'; // Tailwind red-500
+      .attr('fill', (d) => {
+        if (filterWaterStatus !== 'All' && d.waterStatus !== filterWaterStatus) {
+          return 'rgba(200, 200, 200, 0.4)'; // Dim
         }
-        return 'rgb(229, 231, 235)'; // Tailwind gray-200 for normal borders
+        return getStatusColor(d.waterStatus);
       })
-      .attr('stroke-width', (d: GeoFeature) => {
-        const nb = dataMap.get(d.properties.id) as NeighborhoodData | undefined;
-        if (nb && (nb.waterStatus === WaterStatus.CONTAMINATED || (nb.waterStatus === WaterStatus.NO_WATER && (nb.daysNoWater || 0) >= 7))) {
-          return 2.5; // Thicker stroke for critical
-        }
-        return 1;
-      })
-      .attr('class', 'neighborhood-path cursor-pointer transition-all duration-200 ease-in-out')
-      .on('mouseover', (event: MouseEvent, d: GeoFeature) => {
-        const nb = dataMap.get(d.properties.id) as NeighborhoodData;
-        if (nb && tooltipRef.current) {
-          d3.select(event.currentTarget as SVGPathElement)
-            .attr('stroke', 'rgb(59, 130, 246)') // Tailwind blue-500 for hover
-            .attr('stroke-width', 2);
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2)
+      .attr('class', 'cursor-pointer transition-all duration-300 hover:scale-125')
+      .on('mouseover', (event: MouseEvent, nb: NeighborhoodData) => {
+        if (tooltipRef.current) {
+          d3.select(event.currentTarget as SVGCircleElement)
+            .attr('stroke', '#3b82f6') // Blue stroke on hover
+            .attr('stroke-width', 3);
 
           let tooltipContent = `
             <div class="font-bold text-lg mb-2 text-gray-900">${nb.name}</div>
@@ -152,9 +148,6 @@ const MapView: React.FC<MapViewProps> = ({ geojson, neighborhoodData, currentLan
           if (nb.nearestWell) {
             tooltipContent += `<p class="flex items-center"><span class="font-semibold text-gray-800">${WellIcon()}${t('dashboard.nearestWell')}</span> ${nb.nearestWell}</p>`;
           }
-          if (nb.waterTruckSchedule && nb.waterTruckSchedule.length > 0) {
-            tooltipContent += `<p class="flex items-center"><span class="font-semibold text-gray-800">${TruckIcon()}${t('dashboard.waterTruckSchedule')}</span> ${nb.waterTruckSchedule.join(', ')}</p>`;
-          }
           if (nb.alerts && nb.alerts.length > 0) {
             tooltipContent += `<p class="flex items-center text-red-700"><span class="font-semibold text-gray-800">${AlertIcon()}${t('dashboard.alerts')}</span> ${nb.alerts.join(', ')}</p>`;
           }
@@ -163,47 +156,34 @@ const MapView: React.FC<MapViewProps> = ({ geojson, neighborhoodData, currentLan
           tooltipRef.current.innerHTML = tooltipContent;
           d3.select(tooltipRef.current)
             .style('display', 'block')
-            .style('left', `${event.pageX + 15}px`) // Offset tooltip slightly
-            .style('top', `${event.pageY - 15}px`); // Offset tooltip slightly
+            .style('left', `${event.pageX + 15}px`)
+            .style('top', `${event.pageY - 15}px`);
         }
       })
-      .on('mouseout', (event: MouseEvent, d: GeoFeature) => {
-        const nb = dataMap.get(d.properties.id) as NeighborhoodData | undefined;
-        d3.select(event.currentTarget as SVGPathElement)
-          .attr('stroke', (d: GeoFeature) => {
-            if (nb && (nb.waterStatus === WaterStatus.CONTAMINATED || (nb.waterStatus === WaterStatus.NO_WATER && (nb.daysNoWater || 0) >= 7))) {
-              return 'rgb(239, 68, 68)'; // Restore red stroke for critical
-            }
-            return 'rgb(229, 231, 235)'; // Restore normal border
-          })
-          .attr('stroke-width', (d: GeoFeature) => {
-            if (nb && (nb.waterStatus === WaterStatus.CONTAMINATED || (nb.waterStatus === WaterStatus.NO_WATER && (nb.daysNoWater || 0) >= 7))) {
-              return 2.5; // Restore thicker stroke for critical
-            }
-            return 1;
-          });
+      .on('mouseout', (event: MouseEvent) => {
+        d3.select(event.currentTarget as SVGCircleElement)
+          .attr('stroke', '#ffffff')
+          .attr('stroke-width', 2);
         d3.select(tooltipRef.current).style('display', 'none');
       });
 
-      // Add labels for neighborhoods
-      svg.append('g')
-        .selectAll('text')
-        .data(geojson.features)
-        .join('text')
-        .attr('x', (d: GeoFeature) => (path.centroid(d)?.[0] || 0))
-        .attr('y', (d: GeoFeature) => (path.centroid(d)?.[1] || 0) + 4) // Adjust for vertical centering
-        .text((d: GeoFeature) => d.properties.name)
-        .attr('font-family', 'sans-serif')
-        .attr('font-size', '10px')
-        .attr('fill', (d: GeoFeature) => {
-          const nb = dataMap.get(d.properties.id) as NeighborhoodData | undefined;
-          if (filterWaterStatus !== 'All' && nb && nb.waterStatus !== filterWaterStatus) {
-            return 'rgba(55, 65, 81, 0.4)'; // Dim text for non-matching areas (Tailwind gray-700 with opacity)
-          }
-          return 'rgb(55, 65, 81)'; // Tailwind gray-700
-        })
-        .attr('text-anchor', 'middle') // Center text horizontally
-        .attr('pointer-events', 'none'); // Prevent text from blocking mouse events on paths
+    // Add labels for Cities
+    svg.append('g')
+      .selectAll('text')
+      .data(neighborhoodData)
+      .join('text')
+      .attr('x', (d) => projection([d.centroid.lng, d.centroid.lat])?.[0] || 0)
+      .attr('y', (d) => (projection([d.centroid.lng, d.centroid.lat])?.[1] || 0) - (Math.max(width / 50, 6) + 5))
+      .text((d) => d.name)
+      .attr('font-family', 'sans-serif')
+      .attr('font-size', '12px')
+      .attr('font-weight', 'bold')
+      .attr('fill', '#374151') // Gray-700
+      .attr('text-anchor', 'middle')
+      .attr('pointer-events', 'none')
+      .style('text-shadow', '0px 1px 2px rgba(255,255,255,0.8)');
+
+
 
   }, [geojson, neighborhoodData, parentWidth, parentHeight, getStatusColor, getWaterStatusText, getPowerStatusText, currentLang, t, filterWaterStatus]);
 

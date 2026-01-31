@@ -1,17 +1,21 @@
-export enum WaterStatus {
-    UNKNOWN = 'UNKNOWN',
-    AVAILABLE = 'AVAILABLE',
-    SCARCE = 'SCARCE',
-    CONTAMINATED = 'CONTAMINATED',
-    NO_WATER = 'NO_WATER',
-}
+export const WaterStatus = {
+    UNKNOWN: 'UNKNOWN',
+    AVAILABLE: 'AVAILABLE',
+    SCARCE: 'SCARCE',
+    CONTAMINATED: 'CONTAMINATED',
+    NO_WATER: 'NO_WATER',
+} as const;
 
-export enum PowerStatus {
-    UNKNOWN = 'UNKNOWN',
-    ON = 'ON',
-    INTERMITTENT = 'INTERMITTENT',
-    OFF = 'OFF',
-}
+export type WaterStatus = typeof WaterStatus[keyof typeof WaterStatus];
+
+export const PowerStatus = {
+    UNKNOWN: 'UNKNOWN',
+    ON: 'ON',
+    INTERMITTENT: 'INTERMITTENT',
+    OFF: 'OFF',
+} as const;
+
+export type PowerStatus = typeof PowerStatus[keyof typeof PowerStatus];
 
 export interface LatLng {
     lat: number;

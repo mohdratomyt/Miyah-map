@@ -49,7 +49,7 @@ export interface Report {
   type: ReportType;
   timestamp: string; // ISO date string
   message: string;
-  imageUrl?: string;
+  photoUrl?: string; // Changed from imageUrl for consistency with plan
   audioUrl?: string; // Base64 or Blob URL for audio
   isVerified: boolean;
   urgency?: 'Low' | 'Medium' | 'High' | 'Critical'; // New field for complaints

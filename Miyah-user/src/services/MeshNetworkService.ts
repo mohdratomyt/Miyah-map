@@ -1,10 +1,13 @@
 import type { MeshPacket, MeshPeer } from '../types';
 
+const STORAGE_KEY = 'miyah_mesh_network';
+
 class MeshNetworkService {
-    private channel: BroadcastChannel | null = null;
+    private isRunning: boolean = false;
     private peers: Map<string, MeshPeer> = new Map();
     private messageHistory: Set<string> = new Set(); // Dedup
     private callbacks: ((packet: MeshPacket) => void)[] = [];
+    private storageHandler: ((event: StorageEvent) => void) | null = null;
     public deviceId: string;
 
     constructor() {
@@ -12,17 +15,25 @@ class MeshNetworkService {
     }
 
     public start() {
-        if (this.channel) return;
+        if (this.isRunning) return;
+        this.isRunning = true;
 
-        this.channel = new BroadcastChannel('miyah_mesh_network');
-
-        this.channel.onmessage = (event) => {
-            this.handleIncomingMessage(event.data);
+        // Listen for storage events (works across different ports on same host)
+        this.storageHandler = (event: StorageEvent) => {
+            if (event.key === STORAGE_KEY && event.newValue) {
+                try {
+                    const packet = JSON.parse(event.newValue) as MeshPacket;
+                    this.handleIncomingMessage(packet);
+                } catch (e) {
+                    console.error('[Mesh] Failed to parse message:', e);
+                }
+            }
         };
+        window.addEventListener('storage', this.storageHandler);
 
         // Announce presence
         this.broadcast({
-            type: 'NEIGHBORHOOD_UPDATE', // Just a dummy keepalive for now
+            type: 'NEIGHBORHOOD_UPDATE',
             payload: null,
             timestamp: Date.now(),
             messageId: crypto.randomUUID()
@@ -32,14 +43,15 @@ class MeshNetworkService {
     }
 
     public stop() {
-        if (this.channel) {
-            this.channel.close();
-            this.channel = null;
+        if (this.storageHandler) {
+            window.removeEventListener('storage', this.storageHandler);
+            this.storageHandler = null;
         }
+        this.isRunning = false;
     }
 
     public broadcast(packet: Omit<MeshPacket, 'senderId'>) {
-        if (!this.channel) return;
+        if (!this.isRunning) return;
 
         const fullPacket: MeshPacket = {
             ...packet,
@@ -49,7 +61,10 @@ class MeshNetworkService {
         // Add to history so we don't re-process our own
         this.messageHistory.add(fullPacket.messageId);
 
-        this.channel.postMessage(fullPacket);
+        // Write to localStorage - other tabs will receive via 'storage' event
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(fullPacket));
+
+        console.log(`[Mesh] Broadcasted:`, fullPacket);
     }
 
     public onMessage(callback: (packet: MeshPacket) => void) {
@@ -72,8 +87,7 @@ class MeshNetworkService {
         // Notify listeners
         this.callbacks.forEach(cb => cb(packet));
 
-        // In a real mesh, we would re-broadcast (gossip) here if TTL > 0
-        // For BroadcastChannel, all tabs receive it, so no need to re-broadcast.
+        console.log(`[Mesh] Received:`, packet);
     }
 
     public getPeers(): MeshPeer[] {

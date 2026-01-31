@@ -3,6 +3,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { HomeView } from './components/HomeView';
 import { RequestView } from './components/RequestView';
+import { ResourcesView } from './components/ResourcesView';
 import { MeshControlPanel } from './components/MeshControlPanel';
 import { USSDSimulator } from './components/USSDSimulator';
 import { Settings, Smartphone } from 'lucide-react';
@@ -32,6 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomeView />} />
           <Route path="/request/:type" element={<RequestView />} />
+          <Route path="/resources" element={<ResourcesView />} />
           <Route path="/ussd" element={
             <div className="py-6">
               <USSDSimulator />

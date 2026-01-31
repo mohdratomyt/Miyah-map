@@ -1,4 +1,4 @@
-import { Language, Translation, ReportType, WaterStatus, PowerStatus, GeoJsonData } from './types';
+import { Language, Translation, ReportType, WaterStatus, PowerStatus, GeoJsonData, NeighborhoodData } from './types';
 
 // Gemini API Model Name for text-based tasks
 export const GEMINI_MODEL_TEXT_TASK = 'gemini-3-flash-preview';
@@ -718,157 +718,77 @@ export const TRANSLATIONS: Record<Language, Translation> = {
 // In a real application, this would be fetched from a GIS service or a static file.
 // For demonstration, we'll create a simplified GeoJSON structure.
 // Fix: Explicitly type KHARTOUM_GEOJSON_DATA to GeoJsonData
-export const KHARTOUM_GEOJSON_DATA: GeoJsonData = {
-  type: "FeatureCollection",
-  features: [
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-al-amarat',
-        name: 'Al-Amarat',
-        waterStatus: WaterStatus.SCARCE,
-        powerStatus: PowerStatus.OFF,
-        daysNoWater: 3,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.55, 15.58], [32.58, 15.58], [32.58, 15.56], [32.55, 15.56], [32.55, 15.58]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-bahri',
-        name: 'Khartoum Bahri',
-        waterStatus: WaterStatus.NO_WATER,
-        powerStatus: PowerStatus.OFF,
-        daysNoWater: 10,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.53, 15.65], [32.56, 15.65], [32.56, 15.62], [32.53, 15.62], [32.53, 15.65]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-omdurman',
-        name: 'Omdurman',
-        waterStatus: WaterStatus.CONTAMINATED,
-        powerStatus: PowerStatus.INTERMITTENT,
-        daysNoWater: 0,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.45, 15.64], [32.48, 15.64], [32.48, 15.60], [32.45, 15.60], [32.45, 15.64]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-riyadh',
-        name: 'Riyadh',
-        waterStatus: WaterStatus.AVAILABLE,
-        powerStatus: PowerStatus.ON,
-        daysNoWater: 0,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.59, 15.55], [32.62, 15.55], [32.62, 15.53], [32.59, 15.53], [32.59, 15.55]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-alamel',
-        name: 'Al Amel',
-        waterStatus: WaterStatus.NO_WATER,
-        powerStatus: PowerStatus.OFF,
-        daysNoWater: 7,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.50, 15.52], [32.53, 15.52], [32.53, 15.50], [32.50, 15.50], [32.50, 15.52]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-el-sahafa',
-        name: 'El Sahafa',
-        waterStatus: WaterStatus.SCARCE,
-        powerStatus: PowerStatus.INTERMITTENT,
-        daysNoWater: 5,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.60, 15.48], [32.63, 15.48], [32.63, 15.46], [32.60, 15.46], [32.60, 15.48]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-el-azhari',
-        name: 'El Azhari',
-        waterStatus: WaterStatus.AVAILABLE,
-        powerStatus: PowerStatus.ON,
-        daysNoWater: 0,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.40, 15.50], [32.43, 15.50], [32.43, 15.48], [32.40, 15.48], [32.40, 15.50]
-        ]]
-      }
-    },
-    {
-      type: "Feature",
-      properties: {
-        id: 'khartoum-gerif',
-        name: 'Gerif',
-        waterStatus: WaterStatus.NO_WATER,
-        powerStatus: PowerStatus.OFF,
-        daysNoWater: 12,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [[
-          [32.70, 15.60], [32.73, 15.60], [32.73, 15.58], [32.70, 15.58], [32.70, 15.60]
-        ]]
-      }
-    }
-  ]
-};
+// Import Sudan GeoJSON
+import SUDAN_GEOJSON_RAW from './src/data/sudan-geo.json';
 
-// Mock Neighborhood data (derived from GeoJSON properties for convenience)
-export const MOCK_NEIGHBORHOOD_DATA = KHARTOUM_GEOJSON_DATA.features.map(f => ({
-  id: f.properties.id,
-  name: f.properties.name,
-  waterStatus: f.properties.waterStatus,
-  powerStatus: f.properties.powerStatus,
-  lastUpdated: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-  daysNoWater: f.properties.daysNoWater,
-  // Mock additional details
-  nearestWell: Math.random() > 0.5 ? `Al-Fateh Mosque, ${Math.round(Math.random() * 30) + 5} min walk` : undefined,
-  waterTruckSchedule: Math.random() > 0.3 ? ['Tuesday', 'Friday'] : undefined,
-  alerts: Math.random() > 0.6 ? ['Contaminated alert for River Street water.'] : undefined,
-  centroid: {
-    lat: f.geometry.type === 'Polygon' ? f.geometry.coordinates[0][0][1] : f.geometry.coordinates[0][0][0][1],
-    lng: f.geometry.type === 'Polygon' ? f.geometry.coordinates[0][0][0] : f.geometry.coordinates[0][0][0][0],
+// Cast to GeoJsonData type
+export const KHARTOUM_GEOJSON_DATA: GeoJsonData = SUDAN_GEOJSON_RAW as unknown as GeoJsonData;
+
+// Mock Neighborhood data (Manually defined for major cities/areas)
+export const MOCK_NEIGHBORHOOD_DATA: NeighborhoodData[] = [
+  {
+    id: 'khartoum-report',
+    name: 'Khartoum',
+    waterStatus: WaterStatus.SCARCE,
+    powerStatus: PowerStatus.INTERMITTENT,
+    lastUpdated: new Date().toISOString(),
+    daysNoWater: 2,
+    nearestWell: 'Al-Fateh Mosque',
+    alerts: ['Low pressure in central districts'],
+    centroid: { lat: 15.5007, lng: 32.5599 }
+  },
+  {
+    id: 'omdurman-report',
+    name: 'Omdurman',
+    waterStatus: WaterStatus.CONTAMINATED,
+    powerStatus: PowerStatus.ON,
+    lastUpdated: new Date().toISOString(),
+    daysNoWater: 0,
+    centroid: { lat: 15.6445, lng: 32.4777 }
+  },
+  {
+    id: 'bahri-report',
+    name: 'Khartoum Bahri',
+    waterStatus: WaterStatus.NO_WATER,
+    powerStatus: PowerStatus.OFF,
+    lastUpdated: new Date().toISOString(),
+    daysNoWater: 5,
+    centroid: { lat: 15.6192, lng: 32.5332 }
+  },
+  {
+    id: 'nyala-report',
+    name: 'Nyala',
+    waterStatus: WaterStatus.AVAILABLE,
+    powerStatus: PowerStatus.ON,
+    lastUpdated: new Date().toISOString(),
+    centroid: { lat: 12.05, lng: 24.88 }
+  },
+  {
+    id: 'port-sudan-report',
+    name: 'Port Sudan',
+    waterStatus: WaterStatus.AVAILABLE,
+    powerStatus: PowerStatus.INTERMITTENT,
+    lastUpdated: new Date().toISOString(),
+    centroid: { lat: 19.61, lng: 37.21 }
+  },
+  {
+    id: 'kassala-report',
+    name: 'Kassala',
+    waterStatus: WaterStatus.SCARCE,
+    powerStatus: PowerStatus.ON,
+    lastUpdated: new Date().toISOString(),
+    centroid: { lat: 15.45, lng: 36.40 }
+  },
+  {
+    id: 'el-obeid-report',
+    name: 'El Obeid',
+    waterStatus: WaterStatus.NO_WATER,
+    powerStatus: PowerStatus.OFF,
+    lastUpdated: new Date().toISOString(),
+    daysNoWater: 10,
+    centroid: { lat: 13.18, lng: 30.22 }
   }
-}));
+];
 
 // Mock Report data
 export const MOCK_REPORTS = [
