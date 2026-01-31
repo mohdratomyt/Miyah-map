@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Report, ReportType, Language } from '../types';
 import { MOCK_REPORTS, MOCK_NEIGHBORHOOD_DATA } from '../constants';
 import { useTranslation } from '../utils/i18n';
+import { ngoMeshService } from '../services/NGOMeshService';
 
 interface ReportsViewProps {
   currentLang: Language;
@@ -10,6 +11,48 @@ interface ReportsViewProps {
 const ReportsView: React.FC<ReportsViewProps> = ({ currentLang }) => {
   const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
   const { t } = useTranslation(currentLang);
+
+  // Listen for mesh network messages from users
+  useEffect(() => {
+    ngoMeshService.start();
+
+    const unsubscribe = ngoMeshService.onMessage((packet) => {
+      if (packet.type === 'REPORT_NEW') {
+        const { type, message, location, timestamp } = packet.payload;
+
+        const newReport: Report = {
+          id: `mesh-${packet.messageId}`,
+          neighborhoodId: 'khartoum-1', // Default, could be mapped from location
+          type: type === 'water' ? ReportType.WATER_ISSUE :
+            type === 'power' ? ReportType.POWER_ISSUE :
+              ReportType.GENERAL,
+          timestamp: timestamp || new Date().toISOString(),
+          message: `${location}: ${message}`,
+          isVerified: false,
+          urgency: 'Medium',
+        };
+
+        setReports(prevReports => [newReport, ...prevReports]);
+
+        // Show notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('New User Request', {
+            body: `${location}: ${message}`,
+            icon: '/vite.svg'
+          });
+        }
+      }
+    });
+
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // State for the new complaint form
   const [newComplaint, setNewComplaint] = useState<{
@@ -319,8 +362,8 @@ const ReportsView: React.FC<ReportsViewProps> = ({ currentLang }) => {
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                       ${report.urgency === 'Critical' ? 'bg-red-100 text-red-800' :
                         report.urgency === 'High' ? 'bg-orange-100 text-orange-800' :
-                        report.urgency === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'}`}>
+                          report.urgency === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'}`}>
                       {report.urgency || t('status.unknown')}
                     </span>
                   </td>

@@ -4,7 +4,7 @@ import DashboardView from './components/DashboardView';
 import ReportsView from './components/ReportsView';
 import BroadcastsView from './components/BroadcastsView';
 import SettingsView from './components/SettingsView';
-import USSDView from './components/USSDView'; // Import the new USSDView
+// import USSDView from './components/USSDView'; // Removed for NGO App
 import { Language } from './types';
 
 function App() {
@@ -23,8 +23,7 @@ function App() {
         return <ReportsView currentLang={currentLang} />;
       case 'broadcasts':
         return <BroadcastsView currentLang={currentLang} />;
-      case 'ussd': // New case for USSDView
-        return <USSDView currentLang={currentLang} onNavigate={setActiveView} />;
+      // USSDView removed for NGO Admin App
       case 'settings':
         return <SettingsView currentLang={currentLang} onNavigate={setActiveView} />;
       default:
